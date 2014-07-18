@@ -1,0 +1,3 @@
+use:
+	g++ <program.cpp>
+to compile a C++ program

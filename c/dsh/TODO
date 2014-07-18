@@ -1,0 +1,2 @@
+- exit [n]:
+	- exit with status n, or if n not specified, exit with status of last command, or 0 if no commands have been run
