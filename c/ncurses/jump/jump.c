@@ -3,11 +3,6 @@
  * 	gcc -o jump jump.c -lncurses
  */
 
-
-/*
- * TODO: use a char** to hold item?
- */
-
 #include <ncurses.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,39 +10,36 @@
 
 #define DELAY 150
 
-#define GROUND (3*(LINES/4))
-#define MAX_HEIGHT (GROUND-(LINES/2))
+#define LENGTH(x) (sizeof(x) / sizeof(x[0]))
 
-typedef enum _direction direction;
-typedef enum _color color;
+#define GROUND (3*(LINES/4))
+#define MAX_HEIGHT (GROUND-(LINES/3))
+
 typedef struct _Object Object;
 
-enum _direction { UP, DOWN, RIGHT, LEFT, NODIR };
-enum _color { CURSOR_COLOR=1 };
+enum direction { UP, DOWN, RIGHT, LEFT, NODIR };
+enum color { CURSOR_COLOR=1 };
 
 struct _Object {
-	char *item;
+	char *sprite;
 	int height;
 	int width;
 	int y;
 	int x;
 	float v_y;
 	float v_x;
-	direction dir;
-	color colr;
+	int dir;
+	int colr;
 };
 
-void update_position(WINDOW *win, Object *object, direction next_dir);
-
-int object_height(Object *object);
-int object_width(Object *object);
-
+void update_position(WINDOW *win, Object *object, int next_dir);
 void draw_object(WINDOW *win, Object *object);
+char **init_sprite(char **sprite[]);
 
 int main(int argc, char *argv[])
 {
 	Object *cursor;
-	direction next_dir = NODIR;
+	int next_dir = NODIR;
 	int ch;
 
 	initscr(); /* Start curses mode */
@@ -64,13 +56,14 @@ int main(int argc, char *argv[])
 
 	cursor = malloc(sizeof(*cursor));
 	if (!cursor) {
+		endwin();
 		fprintf(stderr, "failed to allocate object\n");
 		exit(EXIT_FAILURE);
 	}
 
-	cursor->item = "XXX";
-	cursor->height = object_height(cursor);
-	cursor->width = object_width(cursor);;
+	cursor->sprite = "XXX";
+	cursor->height = 1;
+	cursor->width = strlen(cursor->sprite);
 	cursor->y = GROUND;
 	cursor->x = COLS/2;
 	cursor->v_y = 1.0;
@@ -109,7 +102,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-void update_position(WINDOW *win, Object *object, direction next_dir)
+void update_position(WINDOW *win, Object *object, int next_dir)
 {
 	int next_y, next_x;
 	int max_y, max_x;
@@ -175,28 +168,6 @@ void update_position(WINDOW *win, Object *object, direction next_dir)
 	}
 }
 
-int object_height(Object *object)
-{
-	char *t;
-	int i;
-
-	for (t = object->item, i = 1; *t; t++) {
-		if (*t == '\n') {
-			i++;
-		}
-	}
-
-	return i;
-	/*
-	return 1;
-	*/
-}
-
-int object_width(Object *object)
-{
-	return strlen(object->item);
-}
-
 void draw_object(WINDOW *win, Object *object)
 {
 	if (win == NULL) {
@@ -204,6 +175,6 @@ void draw_object(WINDOW *win, Object *object)
 	}
 
 	attron(COLOR_PAIR(object->colr));
-	mvwprintw(win, object->y, object->x, "%s", object->item);
+	mvwprintw(win, object->y, object->x, "%s", object->sprite);
 	attroff(COLOR_PAIR(object->colr));
 }
